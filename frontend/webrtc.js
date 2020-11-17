@@ -15,7 +15,7 @@ var default_peer_id;
 // Override with your own STUN servers if you want
 var rtc_configuration = {iceServers: []};
 // The default constraints that will be attempted. Can be overriden by the user.
-var default_constraints = {video: false, audio: false};
+var default_constraints = {offerToReceiveVideo: true, video: false, audio: false};
 
 var connect_attempts = 0;
 var peer_connection;
@@ -80,11 +80,8 @@ function onIncomingSDP(sdp) {
         if (sdp.type != "offer")
             return;
         setStatus("Got SDP offer");
-        local_stream_promise.then((stream) => {
-            setStatus("Got local stream, creating answer");
-            peer_connection.createAnswer()
-            .then(onLocalDescription).catch(setError);
-        }).catch(setError);
+        peer_connection.createAnswer().then(onLocalDescription).catch(setError)
+        
     }).catch(setError);
 }
 
@@ -275,12 +272,6 @@ function createCall(msg) {
     send_channel.onclose = handleDataChannelClose;
     peer_connection.ondatachannel = onDataChannel;
     peer_connection.ontrack = onRemoteTrack;
-    /* Send our video/audio to the other peer */
-    local_stream_promise = getLocalStream().then((stream) => {
-        console.log('Adding local stream');
-        peer_connection.addStream(stream);
-        return stream;
-    }).catch(setError);
 
     if (msg != null && !msg.sdp) {
         console.log("WARNING: First message wasn't an SDP message!?");
